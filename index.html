@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2026 Roth Conversion Tax Calculator</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f7f7f5; --bg3: #f0efe9;
+    --text: #1a1a1a; --text2: #666660; --text3: #999993;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --blue: #378ADD; --blue-bg: #E6F1FB; --blue-text: #0C447C;
+    --green: #1D9E75; --green-bg: #EAF3DE; --green-text: #27500A;
+    --amber: #BA7517; --amber-bg: #FAEEDA; --amber-text: #633806;
+    --red: #E24B4A; --red-bg: #FCEBEB; --red-text: #791F1F;
+    --radius: 8px; --radius-lg: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1a; --bg2: #252523; --bg3: #2e2e2b;
+      --text: #e8e8e2; --text2: #9a9a94; --text3: #666660;
+      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.22);
+      --blue-bg: #0C447C; --blue-text: #B5D4F4;
+      --green-bg: #27500A; --green-text: #C0DD97;
+      --amber-bg: #633806; --amber-text: #FAC775;
+      --red-bg: #791F1F; --red-text: #F7C1C1;
+    }
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--text); font-size: 14px; line-height: 1.5; }
+  .page { max-width: 900px; margin: 0 auto; padding: 24px 16px 60px; }
+  .header { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+  .header h1 { font-size: 22px; font-weight: 500; }
+  .header p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 14px; }
+  .sec { font-size: 10px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--text2); margin-bottom: 12px; }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 600px) { .g2,.g3,.g4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 400px) { .g2,.g3,.g4 { grid-template-columns: 1fr; } }
+  .ir { display: flex; flex-direction: column; gap: 4px; }
+  .ir label { font-size: 11px; color: var(--text2); }
+  .ir input, .ir select {
+    width: 100%; padding: 7px 10px; font-size: 13px;
+    border: 0.5px solid var(--border2); border-radius: var(--radius);
+    background: var(--bg); color: var(--text); outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ir input:focus, .ir select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(55,138,221,.15); }
+  .ir input[readonly] { background: var(--bg2); color: var(--text2); cursor: default; }
+  .sdiv { height: 0.5px; background: var(--border); margin: 14px 0; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  @media (max-width: 600px) { .two { grid-template-columns: 1fr; } }
+  .mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 14px; }
+  .met { background: var(--bg2); border-radius: var(--radius); padding: 10px 12px; }
+  .met-l { font-size: 11px; color: var(--text2); margin-bottom: 3px; }
+  .met-v { font-size: 20px; font-weight: 500; }
+  .met-v.warn { color: var(--amber); } .met-v.good { color: var(--green); } .met-v.bad { color: var(--red); }
+  .row-t { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .row-t tr { border-bottom: 0.5px solid var(--border); }
+  .row-t tr:last-child { border-bottom: none; }
+  .row-t td { padding: 7px 4px; color: var(--text2); }
+  .row-t td:last-child { text-align: right; font-weight: 500; color: var(--text); }
+  .row-t tr.tot td { color: var(--text); font-weight: 600; border-top: 0.5px solid var(--border2); }
+  .row-t td.r { text-align: right; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: var(--radius); font-weight: 500; }
+  .bg  { background: var(--green-bg); color: var(--green-text); }
+  .br  { background: var(--red-bg);   color: var(--red-text); }
+  .ba  { background: var(--amber-bg); color: var(--amber-text); }
+  .bb  { background: var(--blue-bg);  color: var(--blue-text); }
+  .flag { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border-radius: var(--radius); margin-bottom: 7px; font-size: 13px; }
+  .flag i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+  .flag.ok      { background: var(--green-bg); color: var(--green-text); }
+  .flag.warn    { background: var(--amber-bg); color: var(--amber-text); }
+  .flag.danger  { background: var(--red-bg);   color: var(--red-text); }
+  .flag.info    { background: var(--blue-bg);  color: var(--blue-text); }
+  .brk-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 6px; }
+  .brk-lbl { width: 38px; color: var(--text2); text-align: right; flex-shrink: 0; }
+  .brk-trk { flex: 1; background: var(--bg2); border-radius: 3px; height: 7px; overflow: hidden; }
+  .brk-fill { height: 100%; border-radius: 3px; transition: width .2s; }
+  .brk-amt { width: 70px; text-align: right; color: var(--text2); flex-shrink: 0; }
+  .hdtrk { width: 100%; background: var(--bg2); border-radius: 4px; height: 9px; overflow: hidden; margin: 6px 0; }
+  .hdfil { height: 100%; border-radius: 4px; transition: width .2s, background .2s; }
+  .sweet-row { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-bottom: 0.5px solid var(--border); font-size: 13px; cursor: pointer; border-radius: var(--radius); transition: background .1s; }
+  .sweet-row:hover { background: var(--bg2); }
+  .sweet-row:last-child { border-bottom: none; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 13px; font-weight: 500; border-radius: var(--radius); border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); cursor: pointer; transition: background .15s; }
+  .btn:hover { background: var(--bg3); }
+  .btn.primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn.primary:hover { background: #185FA5; }
+  .inp-note { font-size: 11px; color: var(--text3); margin-top: 8px; }
+  .irmaa-active { background: var(--bg2); }
+  .irmaa-triggered td:last-child { color: var(--red) !important; }
+  footer { text-align: center; font-size: 11px; color: var(--text3); margin-top: 32px; padding-top: 16px; border-top: 0.5px solid var(--border); }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>2026 Roth Conversion Calculator</h1>
+      <p>All inputs editable &nbsp;·&nbsp; Live tax formulas &nbsp;·&nbsp; MFJ</p>
+    </div>
+    <button class="btn primary" onclick="printSummary()"><i class="ti ti-download"></i> Export summary</button>
+  </div>
+
+  <!-- FILING -->
+  <div class="card">
+    <p class="sec">Filing &amp; tax year</p>
+    <div class="g3">
+      <div class="ir"><label>Filing status</label>
+        <select id="i-fs"><option value="MFJ" selected>MFJ — Married filing jointly</option><option value="Single">Single</option><option value="HOH">Head of household</option></select>
+      </div>
+      <div class="ir"><label>Tax year</label><input id="i-yr" type="number" value="2026" min="2024" max="2035" step="1"></div>
+      <div class="ir"><label>Scenario label</label><input id="i-scen" type="text" value="Base"></div>
+    </div>
+  </div>
+
+  <!-- INCOME -->
+  <div class="card">
+    <p class="sec">Income</p>
+    <div class="g3">
+      <div class="ir"><label>Wages ($)</label><input id="i-wages" type="number" value="0" min="0" step="1000"></div>
+      <div class="ir"><label>Business income ($)</label><input id="i-biz" type="number" value="0" min="0" step="1000"></div>
+      <div class="ir"><label>Taxable interest ($)</label><input id="i-int" type="number" value="21175.59" min="0" step="100"></div>
+      <div class="ir"><label>Ordinary dividends ($)</label><input id="i-div" type="number" value="66500" min="0" step="500"></div>
+      <div class="ir"><label>Qualified div ratio (%)</label><input id="i-qdr" type="number" value="63.54" min="0" max="100" step="0.01"></div>
+      <div class="ir"><label>Social Security gross ($)</label><input id="i-ss" type="number" value="0" min="0" step="100"></div>
+      <div class="ir"><label>Soc Sec taxable (%)</label><input id="i-ssp" type="number" value="85" min="0" max="100" step="1"></div>
+      <div class="ir"><label>IRA RMD ($)</label><input id="i-rmd" type="number" value="0" min="0" step="1000"></div>
+      <div class="ir"><label>Pensions &amp; annuities ($)</label><input id="i-pen" type="number" value="0" min="0" step="500"></div>
+      <div class="ir"><label>Rental / royalties ($)</label><input id="i-rent" type="number" value="0" min="0" step="500"></div>
+      <div class="ir"><label>Other income ($)</label><input id="i-other" type="number" value="0" min="0" step="500"></div>
+      <div class="ir"><label>HSA deduction ($)</label><input id="i-hsa" type="number" value="0" min="0" step="100"></div>
+    </div>
+  </div>
+
+  <!-- CAP GAINS -->
+  <div class="card">
+    <p class="sec">Capital gains detail</p>
+    <div class="g4">
+      <div class="ir"><label>Schwab ($)</label><input id="i-cg1" type="number" value="4000" min="0" step="100"></div>
+      <div class="ir"><label>Vanguard ($)</label><input id="i-cg2" type="number" value="50142" min="0" step="100"></div>
+      <div class="ir"><label>Additional ($)</label><input id="i-cg3" type="number" value="100000" min="0" step="1000"></div>
+      <div class="ir"><label>Total (calculated)</label><input id="i-cgtotal" type="number" readonly tabindex="-1"></div>
+    </div>
+  </div>
+
+  <!-- ROTH CONVERSION -->
+  <div class="card">
+    <p class="sec">Roth conversion detail</p>
+    <div class="g4">
+      <div class="ir"><label>Chip ($)</label><input id="i-rc1" type="number" value="50000" min="0" step="1000"></div>
+      <div class="ir"><label>Anne ($)</label><input id="i-rc2" type="number" value="50000" min="0" step="1000"></div>
+      <div class="ir"><label>Additional ($)</label><input id="i-rc3" type="number" value="292000" min="0" step="1000"></div>
+      <div class="ir"><label>Total (calculated)</label><input id="i-rothtotal" type="number" readonly tabindex="-1"></div>
+    </div>
+    <div class="sdiv"></div>
+    <p class="sec">Scenario targets</p>
+    <div class="g3">
+      <div class="ir"><label>Low scenario ($)</label><input id="i-sc-low" type="number" value="100000" min="0" step="1000"></div>
+      <div class="ir"><label>Base scenario ($)</label><input id="i-sc-base" type="number" value="392000" min="0" step="1000"></div>
+      <div class="ir"><label>High scenario ($)</label><input id="i-sc-high" type="number" value="500000" min="0" step="1000"></div>
+    </div>
+  </div>
+
+  <!-- DEDUCTIONS -->
+  <div class="card">
+    <p class="sec">Deductions &amp; adjustments</p>
+    <div class="g4">
+      <div class="ir"><label>Standard deduction ($)</label><input id="i-std" type="number" value="32200" min="0" step="100"></div>
+      <div class="ir"><label>Charitable deduction ($)</label><input id="i-char" type="number" value="2000" min="0" step="100"></div>
+      <div class="ir"><label>Student loan interest ($)</label><input id="i-sli" type="number" value="0" min="0" step="100"></div>
+      <div class="ir"><label>Other adjustments ($)</label><input id="i-oadj" type="number" value="0" min="0" step="100"></div>
+    </div>
+  </div>
+
+  <!-- TAX RATES -->
+  <div class="card">
+    <p class="sec">Tax rates &amp; thresholds</p>
+    <div class="g4">
+      <div class="ir"><label>Foreign tax credit ($)</label><input id="i-ftc" type="number" value="2024" min="0" step="100"></div>
+      <div class="ir"><label>NIIT rate (%)</label><input id="i-niit" type="number" value="3.8" min="0" max="10" step="0.1"></div>
+      <div class="ir"><label>NIIT MAGI threshold ($)</label><input id="i-niitt" type="number" value="250000" min="0" step="1000"></div>
+      <div class="ir"><label>State tax rate (%)</label><input id="i-state" type="number" value="4.59" min="0" max="15" step="0.01"></div>
+      <div class="ir"><label>20% LTCG threshold ($)</label><input id="i-ltcg20" type="number" value="613700" min="0" step="100"></div>
+      <div class="ir"><label>0% LTCG threshold ($)</label><input id="i-ltcg0" type="number" value="96700" min="0" step="100"></div>
+    </div>
+  </div>
+
+  <!-- ROTH BALANCES -->
+  <div class="card">
+    <p class="sec">Current Roth balances (as of 4/25/26)</p>
+    <div class="g3">
+      <div class="ir"><label>Chip balance ($)</label><input id="i-rb1" type="number" value="670079.79" min="0" step="100"></div>
+      <div class="ir"><label>Anne balance ($)</label><input id="i-rb2" type="number" value="223691.64" min="0" step="100"></div>
+      <div class="ir"><label>Combined (calculated)</label><input id="i-rbtotal" type="number" readonly tabindex="-1"></div>
+    </div>
+  </div>
+
+  <!-- WITHHOLDING -->
+  <div class="card">
+    <p class="sec">Withholding &amp; estimated payments</p>
+    <div class="g3">
+      <div class="ir"><label>Federal withholding ($)</label><input id="i-fw" type="number" value="117917" min="0" step="100"></div>
+      <div class="ir"><label>State withholding ($)</label><input id="i-sw" type="number" value="29630" min="0" step="100"></div>
+      <div class="ir"><label>Prior est. payments ($)</label><input id="i-ep" type="number" value="0" min="0" step="100"></div>
+    </div>
+    <div class="sdiv"></div>
+    <div class="g4">
+      <div class="ir"><label>Q1 state est. ($)</label><input id="i-q1s" type="number" value="3210" min="0" step="100"></div>
+      <div class="ir"><label>Q1 fed est. ($)</label><input id="i-q1f" type="number" value="12639" min="0" step="100"></div>
+      <div class="ir"><label>Q2 state est. ($)</label><input id="i-q2s" type="number" value="3210" min="0" step="100"></div>
+      <div class="ir"><label>Q2 fed est. ($)</label><input id="i-q2f" type="number" value="12639" min="0" step="100"></div>
+      <div class="ir"><label>Q3 state est. ($)</label><input id="i-q3s" type="number" value="3210" min="0" step="100"></div>
+      <div class="ir"><label>Q3 fed est. ($)</label><input id="i-q3f" type="number" value="12639" min="0" step="100"></div>
+      <div class="ir"><label>Q4 state est. ($)</label><input id="i-q4s" type="number" value="20000" min="0" step="100"></div>
+      <div class="ir"><label>Q4 fed est. ($)</label><input id="i-q4f" type="number" value="80000" min="0" step="100"></div>
+    </div>
+    <p class="inp-note">Enter payments already made or scheduled. Balance due is recalculated automatically.</p>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="mgrid" id="metrics"></div>
+  <div id="flags" style="margin-bottom:14px"></div>
+
+  <div class="two">
+    <div class="card" style="margin-bottom:0"><p class="sec">Income → taxable income</p><table class="row-t" id="inc-table"></table></div>
+    <div class="card" style="margin-bottom:0"><p class="sec">Tax components</p><table class="row-t" id="tax-table"></table></div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <p class="sec">Ordinary income bracket fill</p>
+    <div id="brackets"></div>
+    <p style="font-size:12px;color:var(--text2);margin-top:6px" id="brk-note"></p>
+  </div>
+
+  <div class="card">
+    <p class="sec">20% LTCG threshold headroom</p>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+      <span style="font-size:13px;color:var(--text2)">Taxable income vs <span id="ltcg-lbl">$613,700</span> MFJ threshold</span>
+      <span class="badge" id="hd-badge">—</span>
+    </div>
+    <div class="hdtrk"><div class="hdfil" id="hd-fill"></div></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-top:3px">
+      <span>$0</span><span id="hd-ti">—</span><span id="hd-r">$613,700</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec">Roth conversion sweet spot</p>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Click any row to apply that conversion amount.</p>
+    <div id="sweet-spots"></div>
+  </div>
+
+  <div class="card">
+    <p class="sec">Scenario comparison</p>
+    <table class="row-t" id="scen-table"></table>
+  </div>
+
+  <div class="two" style="margin-top:0">
+    <div class="card" style="margin-bottom:0"><p class="sec">Payment summary</p><table class="row-t" id="est-table"></table></div>
+    <div class="card" style="margin-bottom:0">
+      <p class="sec">IRMAA Medicare surcharges — annual</p>
+      <table class="row-t" id="irmaa-table"></table>
+      <p style="font-size:11px;color:var(--text2);margin-top:8px" id="irmaa-note"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <p class="sec">Current Roth balances</p>
+    <table class="row-t" id="roth-bal-table"></table>
+  </div>
+
+  <footer>
+    2026 Roth Conversion Tax Calculator &nbsp;·&nbsp; For planning purposes only &nbsp;·&nbsp; Not tax advice &nbsp;·&nbsp; Consult a qualified tax professional
+  </footer>
+
+</div><!-- end .page -->
+
+<script>
+const gi = id => document.getElementById(id);
+const fmt = n => '$' + Math.round(n).toLocaleString();
+const fmtd = n => '$' + (+n).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const pct = n => (n*100).toFixed(1) + '%';
+const num = id => parseFloat(gi(id).value) || 0;
+
+const BRACKETS = [
+  {rate:.10, lo:0,      hi:24800},
+  {rate:.12, lo:24800,  hi:100800},
+  {rate:.22, lo:100800, hi:211400},
+  {rate:.24, lo:211400, hi:403550},
+  {rate:.32, lo:403550, hi:512450},
+  {rate:.35, lo:512450, hi:768700},
+  {rate:.37, lo:768700, hi:1e9}
+];
+
+const IRMAA = [
+  {thresh:0,      monthly:0,   label:'Below $342,000'},
+  {thresh:342000, monthly:325, label:'$342,001 – $410,000'},
+  {thresh:410000, monthly:446, label:'$410,001 – $750,000'},
+  {thresh:750000, monthly:487, label:'Above $750,000'},
+];
+
+function getIrmaaBand(agi) {
+  let b = IRMAA[0];
+  for (const x of IRMAA) { if (agi > x.thresh) b = x; }
+  return b;
+}
+
+function calc(roth, wages, biz, int_, div, qdr, ss, ssp, rmd, pen, rent, other, hsa, sli, oadj, std, char_, ftc, niitRate, niitT, stateRate, ltcg20, ltcg0, cgTotal) {
+  const qualDiv = div * (qdr / 100);
+  const ssT = ss * (ssp / 100);
+  const adjIncome = hsa + sli + oadj;
+  const agi = wages + biz + int_ + div + cgTotal + roth + rmd + ssT + pen + rent + other - adjIncome;
+  const ti = Math.max(0, agi - std - char_);
+  const qualInc = qualDiv + cgTotal;
+  const ordTI = Math.max(0, ti - qualInc);
+  let ordTax = 0;
+  const brkData = BRACKETS.map(b => {
+    const inn = Math.max(0, Math.min(ordTI, b.hi) - b.lo);
+    ordTax += inn * b.rate;
+    return { ...b, inn, tax: inn * b.rate };
+  });
+  const ltcgRoom = ltcg20 - ti;
+  let cgTax = 0;
+  if (ti > ltcg0) {
+    const above20 = Math.max(0, ti - ltcg20);
+    const at15 = Math.max(0, qualInc - above20);
+    cgTax = at15 * .15 + above20 * .20;
+  }
+  const investInc = int_ + div + cgTotal;
+  const niitBase = Math.max(0, agi - niitT);
+  const niitAmt = Math.min(investInc, niitBase) * (niitRate / 100);
+  const fedTax = ordTax + cgTax + niitAmt - ftc;
+  const stateExempt = 14500;
+  const stateTax = Math.max(0, agi - stateExempt) * (stateRate / 100);
+  const total = fedTax + stateTax;
+  const eff = ti > 0 ? total / ti : 0;
+  return { agi, ti, ordTI, qualInc, qualDiv, ordTax, cgTax, niitAmt, fedTax, stateTax, total, eff, ltcgRoom, brkData, ssT };
+}
+
+function getInputs() {
+  const cg = num('i-cg1') + num('i-cg2') + num('i-cg3');
+  const roth = num('i-rc1') + num('i-rc2') + num('i-rc3');
+  gi('i-cgtotal').value = cg;
+  gi('i-rothtotal').value = roth;
+  gi('i-rbtotal').value = (num('i-rb1') + num('i-rb2')).toFixed(2);
+  return {
+    roth, cg,
+    wages:num('i-wages'), biz:num('i-biz'), int_:num('i-int'), div:num('i-div'),
+    qdr:num('i-qdr'), ss:num('i-ss'), ssp:num('i-ssp'), rmd:num('i-rmd'),
+    pen:num('i-pen'), rent:num('i-rent'), other:num('i-other'), hsa:num('i-hsa'),
+    sli:num('i-sli'), oadj:num('i-oadj'),
+    std:num('i-std'), char_:num('i-char'), ftc:num('i-ftc'),
+    niitRate:num('i-niit'), niitT:num('i-niitt'), stateRate:num('i-state'),
+    ltcg20:num('i-ltcg20'), ltcg0:num('i-ltcg0'),
+    fw:num('i-fw'), sw:num('i-sw'), ep:num('i-ep'),
+    q1s:num('i-q1s'), q1f:num('i-q1f'), q2s:num('i-q2s'), q2f:num('i-q2f'),
+    q3s:num('i-q3s'), q3f:num('i-q3f'), q4s:num('i-q4s'), q4f:num('i-q4f'),
+  };
+}
+
+function calcFrom(inp, roth) {
+  return calc(roth, inp.wages, inp.biz, inp.int_, inp.div, inp.qdr, inp.ss, inp.ssp,
+    inp.rmd, inp.pen, inp.rent, inp.other, inp.hsa, inp.sli, inp.oadj,
+    inp.std, inp.char_, inp.ftc, inp.niitRate, inp.niitT, inp.stateRate,
+    inp.ltcg20, inp.ltcg0, inp.cg);
+}
+
+function sweetSpots(inp) {
+  const base = calcFrom(inp, 0);
+  return [
+    {label:'No conversion', amount:0},
+    {label:'Fill 22% bracket', amount:Math.max(0, 211400 - base.ordTI)},
+    {label:'Fill 24% bracket', amount:Math.max(0, 403550 - base.ordTI)},
+    {label:'Stay under 20% LTCG', amount:Math.max(0, inp.ltcg20 - base.ti - inp.std - inp.char_)},
+    {label:'Fill 32% bracket', amount:Math.max(0, 512450 - base.ordTI)},
+    {label:'Fill 35% bracket', amount:Math.max(0, 768700 - base.ordTI)},
+  ].map(s => { const r = calcFrom(inp, s.amount); return {...s, tax:r.total, eff:r.eff}; });
+}
+
+function render() {
+  const inp = getInputs();
+  const t = calcFrom(inp, inp.roth);
+  const totalPaid = inp.fw + inp.sw + inp.ep + inp.q1s + inp.q1f + inp.q2s + inp.q2f + inp.q3s + inp.q3f + inp.q4s + inp.q4f;
+  const bal = t.total - totalPaid;
+  const balCls = bal < 0 ? 'good' : bal > 5000 ? 'bad' : 'warn';
+
+  gi('metrics').innerHTML = `
+    <div class="met"><div class="met-l">AGI</div><div class="met-v">${fmt(t.agi)}</div></div>
+    <div class="met"><div class="met-l">Taxable income</div><div class="met-v">${fmt(t.ti)}</div></div>
+    <div class="met"><div class="met-l">Federal tax</div><div class="met-v warn">${fmt(t.fedTax)}</div></div>
+    <div class="met"><div class="met-l">State tax</div><div class="met-v">${fmt(t.stateTax)}</div></div>
+    <div class="met"><div class="met-l">Total tax</div><div class="met-v warn">${fmt(t.total)}</div></div>
+    <div class="met"><div class="met-l">Effective rate</div><div class="met-v">${pct(t.eff)}</div></div>
+    <div class="met"><div class="met-l">Total paid</div><div class="met-v">${fmt(totalPaid)}</div></div>
+    <div class="met"><div class="met-l">Balance due</div><div class="met-v ${balCls}">${bal<0?'–':''}${fmt(Math.abs(bal))}</div></div>
+  `;
+
+  const flags = [];
+  if (t.ltcgRoom < 0) flags.push({type:'danger', icon:'ti-alert-triangle', msg:`Taxable income is ${fmt(Math.abs(t.ltcgRoom))} over the ${fmt(inp.ltcg20)} threshold — LT gains taxed at 20%.`});
+  else if (t.ltcgRoom < 15000) flags.push({type:'warn', icon:'ti-alert-circle', msg:`Only ${fmt(t.ltcgRoom)} below the 20% LTCG threshold. Consider reducing the Roth conversion.`});
+  else flags.push({type:'ok', icon:'ti-circle-check', msg:`${fmt(t.ltcgRoom)} of headroom before 20% LTCG rate at ${fmt(inp.ltcg20)}. Cap gains stay at 15%.`});
+
+  const topBrk = t.brkData.filter(b => b.inn > 0).pop();
+  if (topBrk && topBrk.rate >= .32) flags.push({type:'warn', icon:'ti-alert-circle', msg:`Ordinary income reaches the ${Math.round(topBrk.rate*100)}% bracket. Reducing conversion by ${fmt(t.ordTI - 403550)} stays in 24%.`});
+  else if (topBrk) flags.push({type:'info', icon:'ti-info-circle', msg:`Ordinary income tops out in the ${Math.round(topBrk.rate*100)}% bracket with ${fmt(t.brkData.find(b=>b.rate===topBrk.rate).hi - t.ordTI)} of unused room.`});
+
+  const ib = getIrmaaBand(t.agi);
+  const nb = IRMAA.find(b => b.thresh > t.agi && b.monthly > 0);
+  if (ib.monthly > 0) flags.push({type:'warn', icon:'ti-heart-rate-monitor', msg:`IRMAA: AGI of ${fmt(t.agi)} triggers ${fmt(ib.monthly*12)}/yr per person (${fmt(ib.monthly*24)} combined).${nb?' Next band at '+fmt(nb.thresh)+'.':''}`});
+  else flags.push({type:'ok', icon:'ti-heart-rate-monitor', msg:`AGI of ${fmt(t.agi)} is below the first IRMAA threshold ($342,000). No Medicare surcharge.`});
+
+  if (bal > 5000) flags.push({type:'danger', icon:'ti-cash', msg:`${fmt(bal)} still owed. Increase Q4 estimated payment to avoid underpayment penalty.`});
+  else if (bal < -10000) flags.push({type:'info', icon:'ti-cash', msg:`${fmt(Math.abs(bal))} overpaid. Consider reducing remaining estimated payments.`});
+  else flags.push({type:'ok', icon:'ti-cash', msg:`Payments well-matched to tax. Balance due: ${bal<0?'–':''}${fmt(Math.abs(bal))}.`});
+
+  gi('flags').innerHTML = flags.map(f => `<div class="flag ${f.type}"><i class="ti ${f.icon}"></i><span>${f.msg}</span></div>`).join('');
+
+  gi('inc-table').innerHTML = `
+    <tr><td>Wages + business</td><td>${fmt(inp.wages + inp.biz)}</td></tr>
+    <tr><td>Interest</td><td>${fmt(inp.int_)}</td></tr>
+    <tr><td>Ordinary dividends</td><td>${fmt(inp.div)}</td></tr>
+    <tr><td>&nbsp;&nbsp;of which qualified</td><td style="color:var(--text2)">${fmt(t.qualDiv)}</td></tr>
+    <tr><td>Long-term cap gains</td><td>${fmt(inp.cg)}</td></tr>
+    <tr><td>Roth conversion</td><td>${fmt(inp.roth)}</td></tr>
+    <tr><td>IRA RMD</td><td>${fmt(inp.rmd)}</td></tr>
+    <tr><td>Social Security (taxable)</td><td>${fmt(t.ssT)}</td></tr>
+    <tr><td>Pensions / rental / other</td><td>${fmt(inp.pen + inp.rent + inp.other)}</td></tr>
+    <tr><td>Adjustments</td><td style="color:var(--green)">–${fmt(inp.hsa + inp.sli + inp.oadj)}</td></tr>
+    <tr class="tot"><td>AGI</td><td>${fmt(t.agi)}</td></tr>
+    <tr><td>Standard deduction</td><td style="color:var(--green)">–${fmt(inp.std)}</td></tr>
+    <tr><td>Charitable deduction</td><td style="color:var(--green)">–${fmt(inp.char_)}</td></tr>
+    <tr class="tot"><td>Taxable income</td><td>${fmt(t.ti)}</td></tr>
+  `;
+
+  let margCell = '—';
+  if (inp.roth > 1000) {
+    const t2 = calcFrom(inp, inp.roth - 1000);
+    margCell = pct((t.total - t2.total) / 1000);
+  }
+  gi('tax-table').innerHTML = `
+    <tr><td>Ordinary income tax</td><td>${fmt(t.ordTax)}</td></tr>
+    <tr><td>Cap gains tax (15%/20%)</td><td>${fmt(t.cgTax)}</td></tr>
+    <tr><td>NIIT (${inp.niitRate}%)</td><td>${fmt(t.niitAmt)}</td></tr>
+    <tr><td>Foreign tax credit</td><td style="color:var(--green)">–${fmt(inp.ftc)}</td></tr>
+    <tr class="tot"><td>Federal total</td><td>${fmt(t.fedTax)}</td></tr>
+    <tr><td>State tax (${inp.stateRate}%)</td><td>${fmt(t.stateTax)}</td></tr>
+    <tr class="tot" style="font-size:15px"><td>Total tax</td><td>${fmt(t.total)}</td></tr>
+    <tr><td>Effective rate</td><td>${pct(t.eff)}</td></tr>
+    <tr><td>Marginal rate / Roth $1</td><td>${margCell}</td></tr>
+  `;
+
+  const maxBrk = Math.max(...t.brkData.map(b => b.inn), 1);
+  const brkColors = ['#B5D4F4','#85B7EB','#378ADD','#185FA5','#0C447C','#042C53','#021A33'];
+  gi('brackets').innerHTML = t.brkData.map((b, i) => `
+    <div class="brk-row">
+      <span class="brk-lbl">${Math.round(b.rate*100)}%</span>
+      <div class="brk-trk"><div class="brk-fill" style="width:${b.inn>0?Math.max(2,b.inn/maxBrk*100):0}%;background:${brkColors[i]}"></div></div>
+      <span class="brk-amt">${b.inn > 0 ? fmt(b.tax) : '—'}</span>
+    </div>`).join('');
+  const topB = t.brkData.filter(b => b.inn > 0).pop();
+  gi('brk-note').textContent = topB ? `Ordinary taxable income: ${fmt(t.ordTI)} · tops out in ${Math.round(topB.rate*100)}% bracket` : 'No ordinary taxable income';
+
+  const thresh = inp.ltcg20;
+  gi('ltcg-lbl').textContent = fmt(thresh);
+  gi('hd-r').textContent = fmt(thresh);
+  gi('hd-fill').style.width = Math.min(100, t.ti / thresh * 100) + '%';
+  gi('hd-fill').style.background = t.ltcgRoom < 0 ? '#E24B4A' : t.ltcgRoom < 15000 ? '#BA7517' : '#378ADD';
+  gi('hd-ti').textContent = fmt(t.ti) + ' taxable income';
+  if (t.ltcgRoom < 0) { gi('hd-badge').textContent = fmt(Math.abs(t.ltcgRoom)) + ' over'; gi('hd-badge').className = 'badge br'; }
+  else if (t.ltcgRoom < 15000) { gi('hd-badge').textContent = fmt(t.ltcgRoom) + ' headroom'; gi('hd-badge').className = 'badge ba'; }
+  else { gi('hd-badge').textContent = fmt(t.ltcgRoom) + ' headroom'; gi('hd-badge').className = 'badge bg'; }
+
+  const ss2 = sweetSpots(inp);
+  gi('sweet-spots').innerHTML = ss2.map(s => `
+    <div class="sweet-row" onclick="applyRoth(${s.amount})">
+      <span style="flex:1;color:var(--text2)">${s.label}</span>
+      <span style="font-weight:500;min-width:90px;text-align:right">${fmt(s.amount)}</span>
+      <span style="min-width:90px;text-align:right;color:var(--text2)">${fmt(s.tax)} tax</span>
+      <span class="badge ${Math.round(s.amount)===Math.round(inp.roth)?'bb':''}">eff ${pct(s.eff)}</span>
+    </div>`).join('');
+
+  const scLow = num('i-sc-low'), scBase = num('i-sc-base'), scHigh = num('i-sc-high');
+  const tL = calcFrom(inp, scLow), tB = calcFrom(inp, scBase), tH = calcFrom(inp, scHigh);
+  gi('scen-table').innerHTML = `
+    <tr style="font-size:11px;color:var(--text2)">
+      <td></td><td class="r">Low (${fmt(scLow)})</td><td class="r">Base (${fmt(scBase)})</td><td class="r">High (${fmt(scHigh)})</td>
+    </tr>
+    <tr><td>AGI</td><td class="r">${fmt(tL.agi)}</td><td class="r">${fmt(tB.agi)}</td><td class="r">${fmt(tH.agi)}</td></tr>
+    <tr><td>Taxable income</td><td class="r">${fmt(tL.ti)}</td><td class="r">${fmt(tB.ti)}</td><td class="r">${fmt(tH.ti)}</td></tr>
+    <tr><td>Federal tax</td><td class="r">${fmt(tL.fedTax)}</td><td class="r">${fmt(tB.fedTax)}</td><td class="r">${fmt(tH.fedTax)}</td></tr>
+    <tr><td>State tax</td><td class="r">${fmt(tL.stateTax)}</td><td class="r">${fmt(tB.stateTax)}</td><td class="r">${fmt(tH.stateTax)}</td></tr>
+    <tr class="tot"><td>Total tax</td><td class="r">${fmt(tL.total)}</td><td class="r">${fmt(tB.total)}</td><td class="r">${fmt(tH.total)}</td></tr>
+    <tr><td>Effective rate</td><td class="r">${pct(tL.eff)}</td><td class="r">${pct(tB.eff)}</td><td class="r">${pct(tH.eff)}</td></tr>
+    <tr><td>vs base</td>
+      <td class="r" style="color:var(--green)">${fmt(tL.total-tB.total)}</td>
+      <td class="r" style="color:var(--text2)">—</td>
+      <td class="r" style="color:var(--red)">+${fmt(tH.total-tB.total)}</td>
+    </tr>
+  `;
+
+  gi('est-table').innerHTML = `
+    <tr><td>Federal withholding</td><td>${fmt(inp.fw)}</td></tr>
+    <tr><td>State withholding</td><td>${fmt(inp.sw)}</td></tr>
+    <tr><td>Prior est. payments</td><td>${fmt(inp.ep)}</td></tr>
+    <tr><td>Q1 (state + fed)</td><td>${fmt(inp.q1s + inp.q1f)}</td></tr>
+    <tr><td>Q2 (state + fed)</td><td>${fmt(inp.q2s + inp.q2f)}</td></tr>
+    <tr><td>Q3 (state + fed)</td><td>${fmt(inp.q3s + inp.q3f)}</td></tr>
+    <tr><td>Q4 (state + fed)</td><td>${fmt(inp.q4s + inp.q4f)}</td></tr>
+    <tr class="tot"><td>Total paid</td><td>${fmt(totalPaid)}</td></tr>
+    <tr><td>Total tax owed</td><td>${fmt(t.total)}</td></tr>
+    <tr class="tot" style="font-size:15px"><td>Balance due</td>
+      <td style="color:${bal > 0 ? 'var(--red)' : 'var(--green)'}">${bal > 0 ? fmt(bal) : '–' + fmt(Math.abs(bal))}</td>
+    </tr>
+  `;
+
+  const cb = getIrmaaBand(t.agi);
+  gi('irmaa-table').innerHTML = `
+    <tr style="font-size:11px;color:var(--text2)">
+      <td style="padding-bottom:4px">MAGI range</td>
+      <td class="r" style="padding-bottom:4px">Per person/yr</td>
+      <td class="r" style="padding-bottom:4px">Combined/yr</td>
+    </tr>
+    ${IRMAA.map(b => {
+      const active = b.thresh === cb.thresh;
+      return `<tr class="${active ? 'irmaa-active' : ''} ${active && b.monthly > 0 ? 'irmaa-triggered' : ''}">
+        <td>${b.label}${active ? ' ◀' : ''}</td>
+        <td class="r">${b.monthly > 0 ? fmt(b.monthly * 12) : '—'}</td>
+        <td class="r">${b.monthly > 0 ? fmt(b.monthly * 24) : '—'}</td>
+      </tr>`;
+    }).join('')}
+    <tr class="tot">
+      <td>Your surcharge</td>
+      <td class="r">${cb.monthly > 0 ? fmt(cb.monthly * 12) : '$0'}</td>
+      <td class="r" style="color:${cb.monthly > 0 ? 'var(--red)' : 'var(--green)'}">${cb.monthly > 0 ? fmt(cb.monthly * 24) : '$0'}</td>
+    </tr>
+  `;
+  gi('irmaa-note').textContent = cb.monthly > 0
+    ? `At ${fmt(t.agi)} AGI: ${fmt(cb.monthly*12)}/yr per person · ${fmt(cb.monthly*24)}/yr combined.`
+    : `No IRMAA surcharge at ${fmt(t.agi)} AGI. First band at $342,000.`;
+
+  gi('roth-bal-table').innerHTML = `
+    <tr><td>Chip Roth balance</td><td>${fmtd(num('i-rb1'))}</td></tr>
+    <tr><td>Anne Roth balance</td><td>${fmtd(num('i-rb2'))}</td></tr>
+    <tr class="tot"><td>Combined balance</td><td>${fmtd(num('i-rb1') + num('i-rb2'))}</td></tr>
+    <tr><td>This year's conversions</td><td>${fmt(inp.roth)}</td></tr>
+    <tr class="tot"><td>Projected year-end combined</td><td>${fmtd(num('i-rb1') + num('i-rb2') + inp.roth)}</td></tr>
+  `;
+
+  window._last = {inp, t, totalPaid, bal, cb};
+}
+
+function applyRoth(amt) {
+  const cur = num('i-rc1') + num('i-rc2');
+  gi('i-rc3').value = Math.max(0, amt - cur);
+  render();
+  gi('i-rc3').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+function printSummary() {
+  const d = window._last; if (!d) return;
+  const {inp, t, totalPaid, bal, cb} = d;
+  const now = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
+  const ss2 = sweetSpots(inp);
+  const scLow = num('i-sc-low'), scBase = num('i-sc-base'), scHigh = num('i-sc-high');
+  const tL = calcFrom(inp, scLow), tB = calcFrom(inp, scBase), tH = calcFrom(inp, scHigh);
+  const html = `<!DOCTYPE html><html><head><title>2026 Roth Tax Summary</title>
+  <style>body{font-family:Arial,sans-serif;max-width:780px;margin:32px auto;color:#222;font-size:13px}
+  h1{font-size:20px;margin-bottom:4px}h2{font-size:13px;margin:16px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+  table{width:100%;border-collapse:collapse;margin-bottom:10px}td{padding:4px 8px;border-bottom:1px solid #eee}
+  td:last-child{text-align:right;font-weight:500}.tot td{font-weight:700;border-top:1px solid #ccc}
+  .meta{color:#666;font-size:12px;margin-bottom:16px}.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .active-row{background:#f5f5f5}@media print{body{margin:16px}}</style></head><body>
+  <h1>2026 Roth Conversion Tax Summary</h1>
+  <p class="meta">Generated ${now} · Filing: ${gi('i-fs').value} · Scenario: ${gi('i-scen').value} · Tax year: ${gi('i-yr').value}</p>
+  <div class="two"><div>
+  <h2>Income</h2><table>
+    <tr><td>Wages + business</td><td>${fmt(inp.wages + inp.biz)}</td></tr>
+    <tr><td>Interest</td><td>${fmt(inp.int_)}</td></tr>
+    <tr><td>Dividends (ord / qual)</td><td>${fmt(inp.div)} / ${fmt(t.qualDiv)}</td></tr>
+    <tr><td>Cap gains</td><td>${fmt(inp.cg)}</td></tr>
+    <tr><td>Roth conversion</td><td>${fmt(inp.roth)}</td></tr>
+    <tr><td>IRA RMD</td><td>${fmt(inp.rmd)}</td></tr>
+    <tr><td>SS / Pensions</td><td>${fmt(t.ssT)} / ${fmt(inp.pen)}</td></tr>
+    <tr class="tot"><td>AGI</td><td>${fmt(t.agi)}</td></tr>
+    <tr><td>Deductions</td><td>–${fmt(inp.std + inp.char_)}</td></tr>
+    <tr class="tot"><td>Taxable income</td><td>${fmt(t.ti)}</td></tr>
+  </table></div><div>
+  <h2>Tax</h2><table>
+    <tr><td>Ordinary tax</td><td>${fmt(t.ordTax)}</td></tr>
+    <tr><td>Cap gains tax</td><td>${fmt(t.cgTax)}</td></tr>
+    <tr><td>NIIT (${inp.niitRate}%)</td><td>${fmt(t.niitAmt)}</td></tr>
+    <tr><td>Foreign tax credit</td><td>–${fmt(inp.ftc)}</td></tr>
+    <tr class="tot"><td>Federal</td><td>${fmt(t.fedTax)}</td></tr>
+    <tr><td>State (${inp.stateRate}%)</td><td>${fmt(t.stateTax)}</td></tr>
+    <tr class="tot"><td>Total tax</td><td>${fmt(t.total)}</td></tr>
+    <tr><td>Effective rate</td><td>${pct(t.eff)}</td></tr>
+    <tr><td>20% LTCG headroom</td><td>${t.ltcgRoom < 0 ? 'OVER ' + fmt(Math.abs(t.ltcgRoom)) : fmt(t.ltcgRoom) + ' below'}</td></tr>
+    <tr><td>Total paid</td><td>${fmt(totalPaid)}</td></tr>
+    <tr class="tot"><td>Balance due</td><td>${bal < 0 ? '–' : ''}${fmt(Math.abs(bal))}</td></tr>
+  </table></div></div>
+  <h2>Scenario comparison</h2><table>
+    <tr style="background:#f0f0f0"><td></td><td>Low (${fmt(scLow)})</td><td>Base (${fmt(scBase)})</td><td>High (${fmt(scHigh)})</td></tr>
+    <tr><td>Total tax</td><td>${fmt(tL.total)}</td><td>${fmt(tB.total)}</td><td>${fmt(tH.total)}</td></tr>
+    <tr><td>Effective rate</td><td>${pct(tL.eff)}</td><td>${pct(tB.eff)}</td><td>${pct(tH.eff)}</td></tr>
+    <tr class="tot"><td>vs base</td><td>${fmt(tL.total-tB.total)}</td><td>—</td><td>+${fmt(tH.total-tB.total)}</td></tr>
+  </table>
+  <h2>Sweet spots</h2><table>
+    <tr style="background:#f0f0f0"><td><b>Strategy</b></td><td><b>Conversion</b></td><td><b>Total tax</b></td><td><b>Eff rate</b></td></tr>
+    ${ss2.map(s => `<tr><td>${s.label}</td><td>${fmt(s.amount)}</td><td>${fmt(s.tax)}</td><td>${pct(s.eff)}</td></tr>`).join('')}
+  </table>
+  <h2>IRMAA (annual per person / combined)</h2><table>
+    ${IRMAA.map(b => { const active = b.thresh === cb.thresh; return `<tr class="${active ? 'active-row' : ''}"><td>${b.label}${active ? ' ◀ current' : ''}</td><td>${b.monthly > 0 ? fmt(b.monthly*12) : '—'}</td><td>${b.monthly > 0 ? fmt(b.monthly*24) : '—'}</td></tr>`; }).join('')}
+    <tr class="tot"><td>Your surcharge</td><td>${cb.monthly > 0 ? fmt(cb.monthly*12) : '$0'}</td><td>${cb.monthly > 0 ? fmt(cb.monthly*24) : '$0'}</td></tr>
+  </table>
+  <p style="font-size:11px;color:#999;margin-top:16px">For planning purposes only. Not tax advice. Consult a qualified tax professional.</p>
+  <script>window.onload = () => window.print()<\/script></body></html>`;
+  const w = window.open('', '_blank');
+  if (w) { w.document.write(html); w.document.close(); }
+}
+
+const allIds = ['i-fs','i-yr','i-wages','i-biz','i-int','i-div','i-qdr','i-ss','i-ssp','i-rmd','i-pen','i-rent','i-other','i-hsa','i-sli','i-oadj','i-cg1','i-cg2','i-cg3','i-rc1','i-rc2','i-rc3','i-sc-low','i-sc-base','i-sc-high','i-std','i-char','i-ftc','i-niit','i-niitt','i-state','i-ltcg20','i-ltcg0','i-rb1','i-rb2','i-fw','i-sw','i-ep','i-q1s','i-q1f','i-q2s','i-q2f','i-q3s','i-q3f','i-q4s','i-q4f'];
+allIds.forEach(id => {
+  const el = gi(id);
+  if (el) { el.addEventListener('input', render); el.addEventListener('change', render); }
+});
+render();
+</script>
+</body>
+</html>
